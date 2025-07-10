@@ -45,8 +45,14 @@ pub(crate) async fn nm_apply(
 ) -> Result<(), NmstateError> {
     let mut nm_api = NmApi::new().await.map_err(nm_error_to_nmstate)?;
     let mut nm_route_remove_needs_deactivate = true;
+    let mut forwarding_supported = false;
 
-    check_nm_version(&nm_api, &mut nm_route_remove_needs_deactivate).await;
+    check_nm_version(
+        &nm_api,
+        &mut nm_route_remove_needs_deactivate,
+        &mut forwarding_supported,
+    )
+    .await;
 
     nm_api.set_checkpoint(checkpoint, timeout);
     nm_api.set_checkpoint_auto_refresh(true);
@@ -156,11 +162,18 @@ pub(crate) async fn nm_apply(
             store_dns_config_to_desired_iface(&mut merged_state);
         }
     }
+
     let PerparedNmConnections {
         to_store: nm_conns_to_store,
         to_activate: nm_conns_to_activate,
         to_deactivate: nm_conns_to_deactivate,
-    } = perpare_nm_conns(&merged_state, &conn_matcher, false, is_retry)?;
+    } = perpare_nm_conns(
+        &merged_state,
+        &conn_matcher,
+        false,
+        is_retry,
+        forwarding_supported,
+    )?;
 
     let nm_conns_to_deactivate_first = gen_nm_conn_need_to_deactivate_first(
         &merged_state.interfaces,
@@ -442,15 +455,19 @@ fn gen_nm_conn_need_to_deactivate_first(
 async fn check_nm_version(
     nm_api: &NmApi<'_>,
     route_remove_needs_deactivate: &mut bool,
+    forwarding_supported: &mut bool,
 ) {
     let version = if let Ok(ver_info) = nm_api.version_info().await {
         *route_remove_needs_deactivate = !ver_info
             .has_capability(NmVersionInfo::CAPABILITY_SYNC_ROUTE_WITH_TABLE);
+        *forwarding_supported =
+            ver_info.has_capability(NmVersionInfo::CAPABILITY_IP4_FORWARDING);
         Ok(ver_info.version())
     } else {
         // VersionInfo was added to NM 1.42. For older version we fallback to
         // parsing from Version string if VersionInfo is not available.
         *route_remove_needs_deactivate = true;
+        *forwarding_supported = false;
         nm_api.version().await
     };
 
