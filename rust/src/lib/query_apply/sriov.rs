@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use std::collections::hash_map::Entry;
+use std::collections::{HashSet, hash_map::Entry};
 
 use crate::{
     BaseInterface, ErrorKind, EthernetConfig, EthernetInterface, Interface,
     InterfaceType, Interfaces, NmstateError, SrIovConfig, SrIovVfConfig,
+    SrIovVfRef,
 };
 
 impl SrIovConfig {
@@ -47,6 +48,8 @@ impl SrIovConfig {
         &self,
         pf_name: &str,
         cur_ifaces: &Interfaces,
+        desired_iface_names: &HashSet<String>,
+        referenced_vfs: &HashSet<SrIovVfRef>,
     ) -> Result<(), NmstateError> {
         let cur_pf_iface =
             match cur_ifaces.get_iface(pf_name, InterfaceType::Ethernet) {
@@ -86,6 +89,18 @@ impl SrIovConfig {
             return Ok(());
         };
         for vf in vfs {
+            // A VF netdev is only worth waiting for when it is referenced
+            // somewhere in the desired state, either through a resolved
+            // interface name or through a `sriov:<pf>:<vf_id>` reference.
+            let referenced_by_id = referenced_vfs.contains(&SrIovVfRef {
+                pf_name: pf_name.to_string(),
+                vf_id: vf.id,
+            });
+            let referenced_by_name = !vf.iface_name.is_empty()
+                && desired_iface_names.contains(&vf.iface_name);
+            if !referenced_by_id && !referenced_by_name {
+                continue;
+            }
             if vf.iface_name.is_empty() {
                 return Err(NmstateError::new(
                     ErrorKind::SrIovVfNotFound,

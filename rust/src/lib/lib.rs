@@ -123,6 +123,7 @@ mod unit_tests;
 mod validate;
 
 #[cfg(feature = "query_apply")]
+#[cfg(feature = "query_apply")]
 pub use crate::policy::{
     NetworkCaptureRules, NetworkPolicy, NetworkStateTemplate,
 };
@@ -161,9 +162,9 @@ pub use crate::{
         OvsBridgeBondPortConfig, OvsBridgeConfig, OvsBridgeInterface,
         OvsBridgeOptions, OvsBridgePortConfig, OvsBridgeStpOptions,
         OvsDpdkConfig, OvsInterface, OvsPatchConfig, SrIovConfig,
-        SrIovVfConfig, VethConfig, VlanConfig, VlanInterface, VlanProtocol,
-        VlanQosMapping, VlanRegistrationProtocol, VrfConfig, VrfInterface,
-        VxlanConfig, VxlanInterface, XfrmInterface,
+        SrIovVfConfig, SrIovVfRef, VethConfig, VlanConfig, VlanInterface,
+        VlanProtocol, VlanQosMapping, VlanRegistrationProtocol, VrfConfig,
+        VrfInterface, VxlanConfig, VxlanInterface, XfrmInterface,
     },
     ip::{
         AddressFamily, AddressProtocol, Dhcpv4ClientId, Dhcpv6Duid,

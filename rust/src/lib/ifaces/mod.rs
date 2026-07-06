@@ -71,7 +71,7 @@ pub use ovs::{
     OvsBridgeConfig, OvsBridgeInterface, OvsBridgeOptions, OvsBridgePortConfig,
     OvsBridgeStpOptions, OvsDpdkConfig, OvsInterface, OvsPatchConfig,
 };
-pub use sriov::{SrIovConfig, SrIovVfConfig};
+pub use sriov::{SrIovConfig, SrIovVfConfig, SrIovVfRef};
 pub use vlan::{
     VlanConfig, VlanInterface, VlanProtocol, VlanQosMapping,
     VlanRegistrationProtocol,
